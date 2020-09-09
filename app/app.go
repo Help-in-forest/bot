@@ -16,6 +16,9 @@ func NewApp() *App {
 
 func (a *App) init() {
 	a.token = os.Getenv("TOKEN")
+	if a.token == "" {
+		log.Panic("token is empty!")
+	}
 }
 
 func (a *App) Start() {
