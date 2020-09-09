@@ -31,3 +31,12 @@ func TestWhenApp_Init_PanicsWithoutToken(t *testing.T) {
 
 	app.init()
 }
+
+func TestWhenApp_Init_LoadMessages(t *testing.T) {
+	app := NewApp()
+
+	os.Setenv("TOKEN", "test")
+	app.init()
+
+	assert.Equal(t, "Welcome", app.config.Welcome)
+}

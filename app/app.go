@@ -1,13 +1,26 @@
 package app
 
 import (
+	"encoding/json"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"io/ioutil"
 	"log"
 	"os"
 )
 
+var (
+	//ReaderFile define for test
+	ReaderFile = ioutil.ReadFile
+)
+
 type App struct {
-	token string
+	token  string
+	config *Config
+}
+
+type Config struct {
+	Welcome string `json:"welcome"`
 }
 
 func NewApp() *App {
@@ -19,6 +32,23 @@ func (a *App) init() {
 	if a.token == "" {
 		log.Panic("token is empty!")
 	}
+	a.config = &Config{}
+	err := a.config.loadConfig()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+}
+
+func (c *Config) loadConfig() error {
+	fileName := "../config/config.json"
+	data, err := ReaderFile(fileName)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(data, c); err != nil {
+		return fmt.Errorf("Error to parse config %s", err)
+	}
+	return nil
 }
 
 func (a *App) Start() {

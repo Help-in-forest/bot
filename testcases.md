@@ -4,6 +4,8 @@ If token not present show error and exit
 
 After app launch load messages tree
 
+Show welcome message for /start command
+
 After app launch load auth records
 
 For /start message show welcome message
