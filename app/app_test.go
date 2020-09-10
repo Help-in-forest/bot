@@ -8,6 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func SetUp() *App {
+	app := NewApp()
+	os.Setenv("TOKEN", "test")
+	return app
+}
+
+func CleanUp() {
+	os.Setenv("TOKEN", "")
+}
+
 func TestWhenApp_Init_LoadTokenFromEnv(t *testing.T) {
 	app := NewApp()
 
@@ -52,4 +62,13 @@ func TestWhenApp_GetStartMessage_ShowWelcomeMessage(t *testing.T) {
 	msg := app.chooseMsg("/start")
 
 	assert.Equal(t, "Welcome", msg)
+}
+
+func TestWhenApp_Launch_LoadAuthData(t *testing.T) {
+	defer CleanUp()
+	app := SetUp()
+
+	app.init()
+
+	assert.Equal(t, 1, len(app.users))
 }

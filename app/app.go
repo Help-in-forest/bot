@@ -1,12 +1,14 @@
 package app
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
 
 var (
@@ -17,14 +19,21 @@ var (
 type App struct {
 	token  string
 	config *Config
+	users  map[string][]User
 }
 
 type Config struct {
 	Welcome string `json:"welcome"`
 }
 
+type User struct {
+	Name    string
+	Surname string
+	Data    string
+}
+
 func NewApp() *App {
-	return &App{config: &Config{}}
+	return &App{config: &Config{}, users: map[string][]User{}}
 }
 
 func (a *App) init() {
@@ -33,6 +42,10 @@ func (a *App) init() {
 		log.Panic("token is empty!")
 	}
 	err := a.config.loadConfig()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	err = a.loadUsers()
 	if err != nil {
 		log.Panic(err.Error())
 	}
@@ -49,6 +62,27 @@ func (c *Config) loadConfig() error {
 	}
 	if err := json.Unmarshal(data, c); err != nil {
 		return fmt.Errorf("Error to parse config %s", err)
+	}
+	return nil
+}
+
+func (a *App) loadUsers() error {
+	data, err := ReaderFile("../config/users.csv")
+	if err != nil {
+		return err
+	}
+	r := csv.NewReader(strings.NewReader(string(data)))
+	records, err := r.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, record := range records {
+		user := User{Name: record[1], Surname: record[0], Data: record[2]}
+		if _, ok := a.users[user.Surname]; !ok {
+			a.users[user.Surname] = []User{}
+		}
+		a.users[user.Surname] = append(a.users[user.Surname], user)
 	}
 	return nil
 }
