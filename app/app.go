@@ -24,7 +24,7 @@ type Config struct {
 }
 
 func NewApp() *App {
-	return &App{}
+	return &App{config: &Config{}}
 }
 
 func (a *App) init() {
@@ -32,7 +32,6 @@ func (a *App) init() {
 	if a.token == "" {
 		log.Panic("token is empty!")
 	}
-	a.config = &Config{}
 	err := a.config.loadConfig()
 	if err != nil {
 		log.Panic(err.Error())
@@ -40,10 +39,13 @@ func (a *App) init() {
 }
 
 func (c *Config) loadConfig() error {
-	fileName := "../config/config.json"
+	fileName := "../config/custom.json"
 	data, err := ReaderFile(fileName)
 	if err != nil {
-		return err
+		data, err = ReaderFile("../config/config.json")
+		if err != nil {
+			return err
+		}
 	}
 	if err := json.Unmarshal(data, c); err != nil {
 		return fmt.Errorf("Error to parse config %s", err)
@@ -78,5 +80,14 @@ func (a *App) Start() {
 		msg.ReplyToMessageID = update.Message.MessageID
 
 		bot.Send(msg)
+	}
+}
+
+func (a *App) chooseMsg(command string) string {
+	switch command {
+	case "/start":
+		return a.config.Welcome
+	default:
+		return ""
 	}
 }
