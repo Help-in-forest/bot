@@ -16,6 +16,13 @@ func SetUp() *App {
 	return app
 }
 
+func SetUpReadyApp() *App {
+	app := NewApp()
+	os.Setenv("TOKEN", "test")
+	app.init()
+	return app
+}
+
 func CleanUp() {
 	os.Setenv("TOKEN", "")
 }
@@ -109,4 +116,14 @@ func TestWhenApp_AfterLoadAuthDataEmpty_ShowError(t *testing.T) {
 	app := NewApp()
 
 	app.loadUsers()
+}
+
+func TestWhenUser_NotAuthorized_ShowWelcomeAuthMessage(t *testing.T) {
+	defer CleanUp()
+	app := SetUpReadyApp()
+
+	input := &Message{}
+	msg := app.handle(input)
+
+	assert.Equal(t, "Hi! You are not authorized. Please send your Name Surname and auth data", msg)
 }

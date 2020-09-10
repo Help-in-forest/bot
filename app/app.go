@@ -17,13 +17,15 @@ var (
 )
 
 type App struct {
-	token  string
-	config *Config
-	users  map[string][]User
+	token      string
+	config     *Config
+	users      map[string][]User
+	authorized map[string]struct{}
 }
 
 type Config struct {
 	Welcome string `json:"welcome"`
+	AuthMsg string `json:"auth_msg"`
 }
 
 type User struct {
@@ -32,8 +34,13 @@ type User struct {
 	Data    string
 }
 
+type Message struct {
+	UserName string
+	Text     string
+}
+
 func NewApp() *App {
-	return &App{config: &Config{}, users: map[string][]User{}}
+	return &App{config: &Config{}, users: map[string][]User{}, authorized: map[string]struct{}{}}
 }
 
 func (a *App) init() {
@@ -109,7 +116,10 @@ func (a *App) Start() {
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text}
+		text := a.handle(userMsg)
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 		msg.ReplyToMessageID = update.Message.MessageID
 
 		bot.Send(msg)
@@ -123,4 +133,16 @@ func (a *App) chooseMsg(command string) string {
 	default:
 		return ""
 	}
+}
+
+func (a *App) handle(msg *Message) string {
+	if !a.checkAuth(msg.UserName) {
+		return a.config.AuthMsg
+	}
+	return ""
+}
+
+func (a *App) checkAuth(user string) bool {
+	_, ok := a.authorized[user]
+	return ok
 }

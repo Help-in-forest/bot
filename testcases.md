@@ -10,6 +10,4 @@ After app launch load messages tree
 
 Show welcome message for /start command
 
-For /start message show welcome message
-
 If user is not authorized show welcome auth message
