@@ -1,7 +1,9 @@
 package app
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -71,4 +73,40 @@ func TestWhenApp_Launch_LoadAuthData(t *testing.T) {
 	app.init()
 
 	assert.Equal(t, 1, len(app.users))
+}
+
+func TestWhenApp_AfterLoadAuthDataError_ShowError(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Error must be thrown when users are empty!")
+		} else {
+			fmt.Println("Recovered in f", r)
+		}
+		ReaderFile = ioutil.ReadFile
+	}()
+	ReaderFile = func(filename string) ([]byte, error) {
+		return nil, errors.New("Read error")
+	}
+	app := NewApp()
+
+	app.loadUsers()
+}
+
+func TestWhenApp_AfterLoadAuthDataEmpty_ShowError(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Error must be thrown when users are empty!")
+		} else {
+			fmt.Println("Recovered in f", r)
+		}
+		ReaderFile = ioutil.ReadFile
+	}()
+	ReaderFile = func(filename string) ([]byte, error) {
+		return []byte{}, nil
+	}
+	app := NewApp()
+
+	app.loadUsers()
 }

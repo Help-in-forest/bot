@@ -45,10 +45,7 @@ func (a *App) init() {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	err = a.loadUsers()
-	if err != nil {
-		log.Panic(err.Error())
-	}
+	a.loadUsers()
 }
 
 func (c *Config) loadConfig() error {
@@ -66,15 +63,18 @@ func (c *Config) loadConfig() error {
 	return nil
 }
 
-func (a *App) loadUsers() error {
+func (a *App) loadUsers() {
 	data, err := ReaderFile("../config/users.csv")
 	if err != nil {
-		return err
+		log.Panic(err)
 	}
 	r := csv.NewReader(strings.NewReader(string(data)))
 	records, err := r.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
+	}
+	if len(records) == 0 {
+		log.Panic("Empty users")
 	}
 
 	for _, record := range records {
@@ -84,7 +84,6 @@ func (a *App) loadUsers() error {
 		}
 		a.users[user.Surname] = append(a.users[user.Surname], user)
 	}
-	return nil
 }
 
 func (a *App) Start() {
