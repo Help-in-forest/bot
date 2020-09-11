@@ -1,4 +1,5 @@
 {
   "welcome": "Welcome",
-  "auth_msg": "Hi! You are not authorized. Please send your Name Surname and auth data"
+  "auth_msg": "Hi! You are not authorized. Please send your Name Surname and auth data",
+  "authorized": "Hey! I know you!"
 }

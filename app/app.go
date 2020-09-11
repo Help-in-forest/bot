@@ -24,8 +24,9 @@ type App struct {
 }
 
 type Config struct {
-	Welcome string `json:"welcome"`
-	AuthMsg string `json:"auth_msg"`
+	Welcome    string `json:"welcome"`
+	AuthMsg    string `json:"auth_msg"`
+	Authorized string `json:"authorized"`
 }
 
 type User struct {
@@ -85,7 +86,11 @@ func (a *App) loadUsers() {
 	}
 
 	for _, record := range records {
-		user := User{Name: record[1], Surname: record[0], Data: record[2]}
+		user := User{
+			Name:    strings.ToLower(record[1]),
+			Surname: strings.ToLower(record[0]),
+			Data:    strings.ToLower(record[2]),
+		}
 		if _, ok := a.users[user.Surname]; !ok {
 			a.users[user.Surname] = []User{}
 		}
@@ -136,13 +141,37 @@ func (a *App) chooseMsg(command string) string {
 }
 
 func (a *App) handle(msg *Message) string {
+	var authorized bool
 	if !a.checkAuth(msg.UserName) {
-		return a.config.AuthMsg
+		authorized = a.authorize(msg)
+		if !authorized {
+			return a.config.AuthMsg
+		}
+		return a.config.Authorized
 	}
-	return ""
+	return a.chooseMsg(msg.Text)
 }
 
 func (a *App) checkAuth(user string) bool {
 	_, ok := a.authorized[user]
 	return ok
+}
+
+func (a *App) authorize(msg *Message) bool {
+	data := strings.Split(msg.Text, " ")
+	if len(data) < 3 {
+		return false
+	}
+	if _, ok := a.users[strings.ToLower(data[0])]; !ok {
+		return false
+	}
+	for _, user := range a.users[strings.ToLower(data[0])] {
+		if strings.ToLower(data[0]) == user.Surname &&
+			strings.ToLower(data[1]) == user.Name &&
+			strings.ToLower(data[2]) == user.Data {
+			a.authorized[msg.UserName] = struct{}{}
+			return true
+		}
+	}
+	return false
 }

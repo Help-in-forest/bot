@@ -11,3 +11,5 @@ After app launch load messages tree
 Show welcome message for /start command
 
 If user is not authorized show welcome auth message
+
+If user is not authorized and sends correct auth data authorize him and send welcome authorized message
