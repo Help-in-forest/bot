@@ -125,7 +125,7 @@ func TestWhenUser_NotAuthorized_ShowWelcomeAuthMessage(t *testing.T) {
 	input := &Message{}
 	msg := app.handle(input)
 
-	assert.Equal(t, "Hi! You are not authorized. Please send your Name Surname and auth data", msg)
+	assert.Equal(t, "Hi! You are not authorized. Please send your Surname Name and auth data", msg)
 }
 
 func TestWhenUser_NotAuthorized_SendsAuthMessage(t *testing.T) {
@@ -136,4 +136,13 @@ func TestWhenUser_NotAuthorized_SendsAuthMessage(t *testing.T) {
 	msg := app.handle(input)
 
 	assert.Equal(t, "Hey! I know you!", msg)
+}
+
+func TestWhenUser_Authorized_SendHomeKeyboard(t *testing.T) {
+	defer CleanUp()
+	app := SetUpReadyApp()
+
+	keyboard := app.chooseKeyboard(app.config.Authorized)
+
+	assert.Equal(t, app.homeKeyboard, keyboard)
 }

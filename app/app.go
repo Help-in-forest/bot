@@ -17,16 +17,18 @@ var (
 )
 
 type App struct {
-	token      string
-	config     *Config
-	users      map[string][]User
-	authorized map[string]struct{}
+	token        string
+	config       *Config
+	users        map[string][]User
+	authorized   map[string]struct{}
+	homeKeyboard tgbotapi.InlineKeyboardMarkup
 }
 
 type Config struct {
 	Welcome    string `json:"welcome"`
 	AuthMsg    string `json:"auth_msg"`
 	Authorized string `json:"authorized"`
+	TeamsTitle string `json:"teams_button_title"`
 }
 
 type User struct {
@@ -54,6 +56,11 @@ func (a *App) init() {
 		log.Panic(err.Error())
 	}
 	a.loadUsers()
+	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(a.config.TeamsTitle, a.config.TeamsTitle),
+		),
+	)
 }
 
 func (c *Config) loadConfig() error {
@@ -62,7 +69,10 @@ func (c *Config) loadConfig() error {
 	if err != nil {
 		data, err = ReaderFile("../config/config.json")
 		if err != nil {
-			return err
+			data, err = ReaderFile("config/config.json")
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if err := json.Unmarshal(data, c); err != nil {
@@ -74,7 +84,10 @@ func (c *Config) loadConfig() error {
 func (a *App) loadUsers() {
 	data, err := ReaderFile("../config/users.csv")
 	if err != nil {
-		log.Panic(err)
+		data, err = ReaderFile("config/users.csv")
+		if err != nil {
+			log.Panic(err)
+		}
 	}
 	r := csv.NewReader(strings.NewReader(string(data)))
 	records, err := r.ReadAll()
@@ -121,11 +134,20 @@ func (a *App) Start() {
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
+		if update.CallbackQuery != nil {
+			fmt.Print(update)
+		}
+
 		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text}
 		text := a.handle(userMsg)
+		keyboard := a.chooseKeyboard(text)
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 		msg.ReplyToMessageID = update.Message.MessageID
+
+		if len(keyboard.InlineKeyboard) > 0 {
+			msg.ReplyMarkup = keyboard
+		}
 
 		bot.Send(msg)
 	}
@@ -136,7 +158,16 @@ func (a *App) chooseMsg(command string) string {
 	case "/start":
 		return a.config.Welcome
 	default:
-		return ""
+		return command
+	}
+}
+
+func (a *App) chooseKeyboard(text string) tgbotapi.InlineKeyboardMarkup {
+	switch text {
+	case a.config.Authorized:
+		return a.homeKeyboard
+	default:
+		return tgbotapi.InlineKeyboardMarkup{}
 	}
 }
 

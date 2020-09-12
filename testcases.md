@@ -13,3 +13,5 @@ Show welcome message for /start command
 If user is not authorized show welcome auth message
 
 If user is not authorized and sends correct auth data authorize him and send welcome authorized message
+
+Show home keyboard to user after authorization 
