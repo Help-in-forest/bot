@@ -39,6 +39,19 @@ func SetTelegramIdToUser(user *UserDB, telegramId int) bool {
 	return true
 }
 
+func FindUserByTelegramId(telegramId int) *UserDB {
+	db, err := sql.Open("sqlite3", "./db/dev.db")
+	checkError(err)
+	defer db.Close()
+
+	var user UserDB
+	row := db.QueryRow("SELECT * FROM user WHERE telegram_id = $1", telegramId)
+	err = row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
+	checkError(err)
+
+	return &user
+}
+
 func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)

@@ -174,7 +174,7 @@ func (a *App) chooseKeyboard(text string) tgbotapi.InlineKeyboardMarkup {
 
 func (a *App) handle(msg *Message) string {
 	var authorized bool
-	if !a.checkAuth(msg.UserName) {
+	if !a.checkAuth(msg.TelegramId) {
 		authorized = a.authorize(msg)
 		if !authorized {
 			return a.config.AuthMsg
@@ -184,9 +184,9 @@ func (a *App) handle(msg *Message) string {
 	return a.chooseMsg(msg.Text)
 }
 
-func (a *App) checkAuth(user string) bool {
-	_, ok := a.authorized[user]
-	return ok
+func (a *App) checkAuth(telegramId int) bool {
+	user := FindUserByTelegramId(telegramId)
+	return user.id != 0
 }
 
 func (a *App) authorize(msg *Message) bool {
