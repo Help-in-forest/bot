@@ -190,19 +190,10 @@ func (a *App) checkAuth(user string) bool {
 
 func (a *App) authorize(msg *Message) bool {
 	data := strings.Split(msg.Text, " ")
-	if len(data) < 3 {
+	if len(data) < 2 {
 		return false
 	}
-	if _, ok := a.users[strings.ToLower(data[0])]; !ok {
-		return false
-	}
-	for _, user := range a.users[strings.ToLower(data[0])] {
-		if strings.ToLower(data[0]) == user.Surname &&
-			strings.ToLower(data[1]) == user.Name &&
-			strings.ToLower(data[2]) == user.Data {
-			a.authorized[msg.UserName] = struct{}{}
-			return true
-		}
-	}
-	return false
+
+	user := FindUserByFirstNameAndLatName(data[0], data[1])
+	return user.id != 0
 }
