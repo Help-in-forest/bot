@@ -26,8 +26,17 @@ func FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
 	return &user
 }
 
-func SetTelegramIdToUser(user UserDB, telegramId int) {
+func SetTelegramIdToUser(user *UserDB, telegramId int) bool {
+	db, err := sql.Open("sqlite3", "./db/dev.db")
+	checkError(err)
+	defer db.Close()
 
+	result, err := db.Exec("UPDATE user SET telegram_id = $1 WHERE id = $2", telegramId, user.id)
+	if err != nil {
+		return false
+	}
+	fmt.Println(result.RowsAffected())
+	return true
 }
 
 func checkError(err error) {

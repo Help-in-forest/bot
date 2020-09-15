@@ -38,8 +38,9 @@ type User struct {
 }
 
 type Message struct {
-	UserName string
-	Text     string
+	UserName   string
+	Text       string
+	TelegramId int
 }
 
 func NewApp() *App {
@@ -138,7 +139,7 @@ func (a *App) Start() {
 			fmt.Print(update)
 		}
 
-		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text}
+		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text, TelegramId: update.Message.From.ID}
 		text := a.handle(userMsg)
 		keyboard := a.chooseKeyboard(text)
 
@@ -195,5 +196,9 @@ func (a *App) authorize(msg *Message) bool {
 	}
 
 	user := FindUserByFirstNameAndLatName(data[0], data[1])
-	return user.id != 0
+	if user.id != 0 {
+		result := SetTelegramIdToUser(user, msg.TelegramId)
+		return result
+	}
+	return false
 }
