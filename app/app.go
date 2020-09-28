@@ -199,9 +199,9 @@ func (a *App) authorize(msg *Message) bool {
 		return false
 	}
 
-	user := FindUserByFirstNameAndLatName(data[0], data[1])
-	if user.id != 0 {
-		result := SetTelegramIdToUser(user, msg.TelegramId)
+	user := a.dataSource.FindUserByFirstNameAndLatName(data[0], data[1])
+	if user != nil {
+		result := a.dataSource.SetTelegramIdToUser(user, msg.TelegramId)
 		return result
 	}
 	return false

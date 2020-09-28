@@ -21,7 +21,7 @@ func NewDataSource(path string) *DataSource {
 	return &DataSource{path: path}
 }
 
-func (ds DataSource) getDbConnect() *sql.DB {
+func (ds DataSource) getConnect() *sql.DB {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
 		log.Print(err)
@@ -30,37 +30,42 @@ func (ds DataSource) getDbConnect() *sql.DB {
 	return db
 }
 
-func FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	db, err := sql.Open("sqlite3", "./db/dev.db")
-	defer db.Close()
+func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
+	connect := ds.getConnect()
+	if connect == nil {
+		return nil
+	}
+	defer connect.Close()
 
-	var user UserDB
-	row := db.QueryRow("SELECT * FROM user WHERE first_name = $1 AND last_name = $2", firstName, lastName)
-	err = row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
+	user := new(UserDB)
+	row := connect.QueryRow("SELECT * FROM user WHERE first_name = $1 AND last_name = $2", firstName, lastName)
+	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
 	if err != nil {
 		log.Print(err)
+		return nil
 	}
 
-	return &user
+	return user
 }
 
-func SetTelegramIdToUser(user *UserDB, telegramId int) bool {
-	db, err := sql.Open("sqlite3", "./db/dev.db")
-	if err != nil {
-		log.Print(err)
+func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
+	connect := ds.getConnect()
+	if connect == nil {
+		return false
 	}
-	defer db.Close()
+	defer connect.Close()
 
-	result, err := db.Exec("UPDATE user SET telegram_id = $1 WHERE id = $2", telegramId, user.id)
+	result, err := connect.Exec("UPDATE user SET telegram_id = $1 WHERE id = $2", telegramId, user.id)
 	if err != nil {
 		return false
 	}
+
 	log.Print(result.RowsAffected())
 	return true
 }
 
 func (ds DataSource) FindUserByTelegramId(telegramId int) *UserDB {
-	connect := ds.getDbConnect()
+	connect := ds.getConnect()
 	if connect == nil {
 		return nil
 	}
