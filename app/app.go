@@ -22,6 +22,7 @@ type App struct {
 	users        map[string][]User
 	authorized   map[string]struct{}
 	homeKeyboard tgbotapi.InlineKeyboardMarkup
+	dataSource   DataSource
 }
 
 type Config struct {
@@ -56,6 +57,9 @@ func (a *App) init() {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
+	a.dataSource = *NewDataSource("./db/dev.db")
+
 	a.loadUsers()
 	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -185,8 +189,8 @@ func (a *App) handle(msg *Message) string {
 }
 
 func (a *App) checkAuth(telegramId int) bool {
-	user := FindUserByTelegramId(telegramId)
-	return user.id != 0
+	user := a.dataSource.FindUserByTelegramId(telegramId)
+	return user != nil
 }
 
 func (a *App) authorize(msg *Message) bool {
