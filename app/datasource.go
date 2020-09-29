@@ -2,6 +2,7 @@ package app
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -34,7 +35,7 @@ func NewDataSource(path string) (*DataSource, error) {
 	return &DataSource{path: path}, nil
 }
 
-func (ds DataSource) Select(query string, args ...interface{}) *sql.Row {
+func (ds DataSource) Select(query string) *sql.Row {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
 		log.Print(err)
@@ -42,7 +43,7 @@ func (ds DataSource) Select(query string, args ...interface{}) *sql.Row {
 	}
 	defer db.Close()
 
-	return db.QueryRow(query, args)
+	return db.QueryRow(query)
 }
 
 func (ds DataSource) getConnect() *sql.DB {
@@ -55,8 +56,9 @@ func (ds DataSource) getConnect() *sql.DB {
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	row := ds.Select("SELECT * FROM user WHERE first_name = $1 AND last_name = $2", firstName, lastName)
-	if row != nil {
+	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s'", firstName, lastName)
+	row := ds.Select(query)
+	if row == nil {
 		return nil
 	}
 
