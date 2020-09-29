@@ -17,8 +17,32 @@ type DataSource struct {
 	path string
 }
 
-func NewDataSource(path string) *DataSource {
-	return &DataSource{path: path}
+func NewDataSource(path string) (*DataSource, error) {
+	db, err := sql.Open("sqlite3", path)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &DataSource{path: path}, nil
+}
+
+func (ds DataSource) Select(query string, args ...interface{}) *sql.Row {
+	db, err := sql.Open("sqlite3", ds.path)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+	defer db.Close()
+
+	return db.QueryRow(query, args)
 }
 
 func (ds DataSource) getConnect() *sql.DB {
@@ -31,14 +55,12 @@ func (ds DataSource) getConnect() *sql.DB {
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	connect := ds.getConnect()
-	if connect == nil {
+	row := ds.Select("SELECT * FROM user WHERE first_name = $1 AND last_name = $2", firstName, lastName)
+	if row != nil {
 		return nil
 	}
-	defer connect.Close()
 
 	user := new(UserDB)
-	row := connect.QueryRow("SELECT * FROM user WHERE first_name = $1 AND last_name = $2", firstName, lastName)
 	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
 	if err != nil {
 		log.Print(err)

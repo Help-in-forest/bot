@@ -22,7 +22,7 @@ type App struct {
 	users        map[string][]User
 	authorized   map[string]struct{}
 	homeKeyboard tgbotapi.InlineKeyboardMarkup
-	dataSource   DataSource
+	dataSource   *DataSource
 }
 
 type Config struct {
@@ -58,7 +58,15 @@ func (a *App) init() {
 		log.Panic(err.Error())
 	}
 
-	a.dataSource = *NewDataSource("./db/dev.db")
+	dataSourcePath := os.Getenv("DB_PATH")
+	if dataSourcePath == "" {
+		log.Panic("DB_PATH is empty!")
+	}
+	ds, err := NewDataSource(dataSourcePath)
+	if err != nil {
+		log.Panic("Invalid DB_PATH. DB does not exist!")
+	}
+	a.dataSource = ds
 
 	a.loadUsers()
 	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
