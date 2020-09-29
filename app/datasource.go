@@ -62,7 +62,7 @@ func (ds DataSource) Update(query string) *sql.Result {
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s'", firstName, lastName)
+	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s' AND telegram_id = null", firstName, lastName)
 	row := ds.Select(query)
 	if row == nil {
 		return nil
