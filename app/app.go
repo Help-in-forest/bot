@@ -22,6 +22,7 @@ type App struct {
 	users        map[string][]User
 	authorized   map[string]struct{}
 	homeKeyboard tgbotapi.InlineKeyboardMarkup
+	dataSource   *DataSource
 }
 
 type Config struct {
@@ -38,8 +39,9 @@ type User struct {
 }
 
 type Message struct {
-	UserName string
-	Text     string
+	UserName   string
+	Text       string
+	TelegramID int
 }
 
 func NewApp() *App {
@@ -55,6 +57,17 @@ func (a *App) init() {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
+	dataSourcePath := os.Getenv("DB_PATH")
+	if dataSourcePath == "" {
+		log.Panic("DB_PATH is empty!")
+	}
+	ds, err := NewDataSource(dataSourcePath)
+	if err != nil {
+		log.Panic("Invalid DB_PATH. DB does not exist!")
+	}
+	a.dataSource = ds
+
 	a.loadUsers()
 	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -138,7 +151,7 @@ func (a *App) Start() {
 			fmt.Print(update)
 		}
 
-		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text}
+		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text, TelegramID: update.Message.From.ID}
 		text := a.handle(userMsg)
 		keyboard := a.chooseKeyboard(text)
 
@@ -173,7 +186,7 @@ func (a *App) chooseKeyboard(text string) tgbotapi.InlineKeyboardMarkup {
 
 func (a *App) handle(msg *Message) string {
 	var authorized bool
-	if !a.checkAuth(msg.UserName) {
+	if !a.checkAuth(msg.TelegramID) {
 		authorized = a.authorize(msg)
 		if !authorized {
 			return a.config.AuthMsg
@@ -183,26 +196,21 @@ func (a *App) handle(msg *Message) string {
 	return a.chooseMsg(msg.Text)
 }
 
-func (a *App) checkAuth(user string) bool {
-	_, ok := a.authorized[user]
-	return ok
+func (a *App) checkAuth(TelegramID int) bool {
+	user := a.dataSource.FindUserByTelegramId(TelegramID)
+	return user != nil
 }
 
 func (a *App) authorize(msg *Message) bool {
 	data := strings.Split(msg.Text, " ")
-	if len(data) < 3 {
+	if len(data) < 2 {
 		return false
 	}
-	if _, ok := a.users[strings.ToLower(data[0])]; !ok {
-		return false
-	}
-	for _, user := range a.users[strings.ToLower(data[0])] {
-		if strings.ToLower(data[0]) == user.Surname &&
-			strings.ToLower(data[1]) == user.Name &&
-			strings.ToLower(data[2]) == user.Data {
-			a.authorized[msg.UserName] = struct{}{}
-			return true
-		}
+
+	user := a.dataSource.FindUserByFirstNameAndLatName(data[0], data[1])
+	if user != nil {
+		result := a.dataSource.SetTelegramIdToUser(user, msg.TelegramID)
+		return result
 	}
 	return false
 }
