@@ -41,7 +41,7 @@ type User struct {
 type Message struct {
 	UserName   string
 	Text       string
-	TelegramId int
+	TelegramID int
 }
 
 func NewApp() *App {
@@ -151,7 +151,7 @@ func (a *App) Start() {
 			fmt.Print(update)
 		}
 
-		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text, TelegramId: update.Message.From.ID}
+		userMsg := &Message{UserName: update.Message.From.UserName, Text: update.Message.Text, TelegramID: update.Message.From.ID}
 		text := a.handle(userMsg)
 		keyboard := a.chooseKeyboard(text)
 
@@ -186,7 +186,7 @@ func (a *App) chooseKeyboard(text string) tgbotapi.InlineKeyboardMarkup {
 
 func (a *App) handle(msg *Message) string {
 	var authorized bool
-	if !a.checkAuth(msg.TelegramId) {
+	if !a.checkAuth(msg.TelegramID) {
 		authorized = a.authorize(msg)
 		if !authorized {
 			return a.config.AuthMsg
@@ -196,8 +196,8 @@ func (a *App) handle(msg *Message) string {
 	return a.chooseMsg(msg.Text)
 }
 
-func (a *App) checkAuth(telegramId int) bool {
-	user := a.dataSource.FindUserByTelegramId(telegramId)
+func (a *App) checkAuth(TelegramID int) bool {
+	user := a.dataSource.FindUserByTelegramId(TelegramID)
 	return user != nil
 }
 
@@ -209,7 +209,7 @@ func (a *App) authorize(msg *Message) bool {
 
 	user := a.dataSource.FindUserByFirstNameAndLatName(data[0], data[1])
 	if user != nil {
-		result := a.dataSource.SetTelegramIdToUser(user, msg.TelegramId)
+		result := a.dataSource.SetTelegramIdToUser(user, msg.TelegramID)
 		return result
 	}
 	return false

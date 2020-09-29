@@ -11,7 +11,7 @@ type UserDB struct {
 	id         int
 	firstName  string
 	lastName   string
-	telegramId sql.NullInt64
+	TelegramID sql.NullInt64
 }
 
 type DataSource struct {
@@ -69,7 +69,7 @@ func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName st
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
+	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -86,15 +86,15 @@ func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
 	return true
 }
 
-func (ds DataSource) FindUserByTelegramId(telegramId int) *UserDB {
-	query := fmt.Sprintf("SELECT * FROM user WHERE telegram_id = '%d'", telegramId)
+func (ds DataSource) FindUserByTelegramId(TelegramID int) *UserDB {
+	query := fmt.Sprintf("SELECT * FROM user WHERE telegram_id = '%d'", TelegramID)
 	row := ds.Select(query)
 	if row == nil {
 		return nil
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
+	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID)
 	if err != nil {
 		log.Print(err)
 		return nil
