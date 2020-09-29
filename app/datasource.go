@@ -38,7 +38,7 @@ func NewDataSource(path string) (*DataSource, error) {
 func (ds DataSource) Select(query string) *sql.Row {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		return nil
 	}
 	defer db.Close()
@@ -46,13 +46,19 @@ func (ds DataSource) Select(query string) *sql.Row {
 	return db.QueryRow(query)
 }
 
-func (ds DataSource) getConnect() *sql.DB {
+func (ds DataSource) Update(query string) *sql.Result {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		return nil
 	}
-	return db
+	defer db.Close()
+
+	result, err := db.Exec(query)
+	if err != nil {
+		return nil
+	}
+	return &result
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
@@ -68,40 +74,30 @@ func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName st
 		log.Print(err)
 		return nil
 	}
-
 	return user
 }
 
 func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
-	connect := ds.getConnect()
-	if connect == nil {
+	query := fmt.Sprintf("UPDATE user SET telegram_id = '%d' WHERE id = '%d'", telegramId, user.id)
+	result := ds.Update(query)
+	if result == nil {
 		return false
 	}
-	defer connect.Close()
-
-	result, err := connect.Exec("UPDATE user SET telegram_id = $1 WHERE id = $2", telegramId, user.id)
-	if err != nil {
-		return false
-	}
-
-	log.Print(result.RowsAffected())
 	return true
 }
 
 func (ds DataSource) FindUserByTelegramId(telegramId int) *UserDB {
-	connect := ds.getConnect()
-	if connect == nil {
+	query := fmt.Sprintf("SELECT * FROM user WHERE telegram_id = '%d'", telegramId)
+	row := ds.Select(query)
+	if row == nil {
 		return nil
 	}
-	defer connect.Close()
 
-	var user UserDB
-	row := connect.QueryRow("SELECT * FROM user WHERE telegram_id = $1", telegramId)
+	user := new(UserDB)
 	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.telegramId)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
-
-	return &user
+	return user
 }
