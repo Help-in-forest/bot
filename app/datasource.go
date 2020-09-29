@@ -11,7 +11,7 @@ type UserDB struct {
 	id         int
 	firstName  string
 	lastName   string
-	telegramId int
+	telegramId sql.NullInt64
 }
 
 type DataSource struct {
