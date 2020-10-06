@@ -12,6 +12,12 @@ type UserDB struct {
 	firstName  string
 	lastName   string
 	TelegramID sql.NullInt64
+	teamID     int
+}
+
+type Team struct {
+	id   int
+	name string
 }
 
 type DataSource struct {
@@ -35,7 +41,23 @@ func NewDataSource(path string) (*DataSource, error) {
 	return &DataSource{path: path}, nil
 }
 
-func (ds DataSource) Select(query string) *sql.Row {
+func (ds DataSource) querySelectMany(query string) *sql.Rows {
+	db, err := sql.Open("sqlite3", ds.path)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer db.Close()
+
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return rows
+}
+
+func (ds DataSource) querySelectOne(query string) *sql.Row {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
 		log.Println(err)
@@ -46,7 +68,7 @@ func (ds DataSource) Select(query string) *sql.Row {
 	return db.QueryRow(query)
 }
 
-func (ds DataSource) Update(query string) *sql.Result {
+func (ds DataSource) queryUpdate(query string) *sql.Result {
 	db, err := sql.Open("sqlite3", ds.path)
 	if err != nil {
 		log.Println(err)
@@ -62,14 +84,14 @@ func (ds DataSource) Update(query string) *sql.Result {
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s' AND telegram_id = null", firstName, lastName)
-	row := ds.Select(query)
+	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s' AND telegram_id is null", firstName, lastName)
+	row := ds.querySelectOne(query)
 	if row == nil {
 		return nil
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID)
+	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID, &user.teamID)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -79,7 +101,7 @@ func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName st
 
 func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
 	query := fmt.Sprintf("UPDATE user SET telegram_id = '%d' WHERE id = '%d'", telegramId, user.id)
-	result := ds.Update(query)
+	result := ds.queryUpdate(query)
 	if result == nil {
 		return false
 	}
@@ -88,16 +110,36 @@ func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
 
 func (ds DataSource) FindUserByTelegramId(TelegramID int) *UserDB {
 	query := fmt.Sprintf("SELECT * FROM user WHERE telegram_id = '%d'", TelegramID)
-	row := ds.Select(query)
+	row := ds.querySelectOne(query)
 	if row == nil {
 		return nil
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID)
+	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID, &user.teamID)
 	if err != nil {
 		log.Print(err)
 		return nil
 	}
 	return user
+}
+
+func (ds DataSource) FindAllPublicTeams() *[]Team {
+	query := fmt.Sprintf("SELECT * FROM team WHERE is_public = true")
+	rows := ds.querySelectMany(query)
+	if rows == nil {
+		return nil
+	}
+
+	var teams []Team
+	for rows.Next() {
+		t := Team{}
+		err := rows.Scan(&t.id, &t.name)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		teams = append(teams, t)
+	}
+	return &teams
 }
