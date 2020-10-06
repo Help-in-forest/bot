@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -68,7 +67,6 @@ func (a *App) init() {
 	}
 	a.dataSource = ds
 
-	a.loadUsers()
 	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(a.config.TeamsTitle, a.config.TeamsTitle),
@@ -92,36 +90,6 @@ func (c *Config) loadConfig() error {
 		return fmt.Errorf("Error to parse config %s", err)
 	}
 	return nil
-}
-
-func (a *App) loadUsers() {
-	data, err := ReaderFile("../config/users.csv")
-	if err != nil {
-		data, err = ReaderFile("config/users.csv")
-		if err != nil {
-			log.Panic(err)
-		}
-	}
-	r := csv.NewReader(strings.NewReader(string(data)))
-	records, err := r.ReadAll()
-	if err != nil {
-		log.Panic(err)
-	}
-	if len(records) == 0 {
-		log.Panic("Empty users")
-	}
-
-	for _, record := range records {
-		user := User{
-			Name:    strings.ToLower(record[1]),
-			Surname: strings.ToLower(record[0]),
-			Data:    strings.ToLower(record[2]),
-		}
-		if _, ok := a.users[user.Surname]; !ok {
-			a.users[user.Surname] = []User{}
-		}
-		a.users[user.Surname] = append(a.users[user.Surname], user)
-	}
 }
 
 func (a *App) Start() {
