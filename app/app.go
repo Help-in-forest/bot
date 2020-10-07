@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 )
 
 var (
@@ -22,6 +21,7 @@ type App struct {
 	authorized   map[string]struct{}
 	homeKeyboard tgbotapi.InlineKeyboardMarkup
 	dataSource   *DataSource
+	auth         *Authorization
 }
 
 type Config struct {
@@ -66,6 +66,8 @@ func (a *App) init() {
 		log.Panic("Invalid DB_PATH. DB does not exist!")
 	}
 	a.dataSource = ds
+
+	a.auth = NewAuthorization(a.dataSource)
 
 	a.homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -124,7 +126,6 @@ func (a *App) Start() {
 		keyboard := a.chooseKeyboard(text)
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-		msg.ReplyToMessageID = update.Message.MessageID
 
 		if len(keyboard.InlineKeyboard) > 0 {
 			msg.ReplyMarkup = keyboard
@@ -154,31 +155,12 @@ func (a *App) chooseKeyboard(text string) tgbotapi.InlineKeyboardMarkup {
 
 func (a *App) handle(msg *Message) string {
 	var authorized bool
-	if !a.checkAuth(msg.TelegramID) {
-		authorized = a.authorize(msg)
+	if !a.auth.CheckAuthorization(msg.TelegramID) {
+		authorized = a.auth.Authorize(msg)
 		if !authorized {
 			return a.config.AuthMsg
 		}
 		return a.config.Authorized
 	}
 	return a.chooseMsg(msg.Text)
-}
-
-func (a *App) checkAuth(TelegramID int) bool {
-	user := a.dataSource.FindUserByTelegramId(TelegramID)
-	return user != nil
-}
-
-func (a *App) authorize(msg *Message) bool {
-	data := strings.Split(msg.Text, " ")
-	if len(data) < 2 {
-		return false
-	}
-
-	user := a.dataSource.FindUserByFirstNameAndLatName(data[0], data[1])
-	if user != nil {
-		result := a.dataSource.SetTelegramIdToUser(user, msg.TelegramID)
-		return result
-	}
-	return false
 }
