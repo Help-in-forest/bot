@@ -12,12 +12,15 @@ func NewAuthorization(source *DataSource) *Authorization {
 	return &Authorization{dataSource: source}
 }
 
-func (a *Authorization) CheckAuthorization(TelegramID int) bool {
-	user := a.dataSource.FindUserByTelegramId(TelegramID)
-	return user != nil
+func (a *Authorization) CheckAuthorization(userMessage *Message) bool {
+	user := a.dataSource.FindUserByTelegramId(userMessage.TelegramID)
+	if user != nil {
+		return true
+	}
+	return a.tryAuthorize(userMessage)
 }
 
-func (a *Authorization) Authorize(msg *Message) bool {
+func (a *Authorization) tryAuthorize(msg *Message) bool {
 	data := strings.Split(msg.Text, " ")
 	if len(data) < 2 {
 		return false
