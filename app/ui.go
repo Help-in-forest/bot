@@ -8,10 +8,11 @@ import (
 )
 
 type MessageTemplate struct {
-	Welcome          string `json:"welcome"`
-	AuthMsg          string `json:"auth_msg"`
-	MainCommand      string `json:"main_command"`
-	UndefinedCommand string `json:"undefined_command"`
+	Start                   string `json:"start"`
+	NotAuthorized           string `json:"not_authorized"`
+	SuccessfulAuthorization string `json:"successful_authorization"`
+	MainCommand             string `json:"main_command"`
+	UndefinedCommand        string `json:"undefined_command"`
 }
 
 type UI struct {
@@ -43,11 +44,16 @@ func (u UI) HandleMessage(userMessage *Message) *tgbotapi.MessageConfig {
 	msg.ChatID = userMessage.CharID
 
 	if userMessage.Text == "/start" {
-		msg.Text = u.template.Welcome
+		msg.Text = u.template.Start
 		return msg
 	}
 	if !u.auth.CheckAuthorization(userMessage) {
-		msg.Text = u.template.AuthMsg
+		if u.auth.TryAuthorize(userMessage) {
+			msg.Text = u.template.SuccessfulAuthorization
+			msg.ReplyMarkup = u.getKeyboardButtons([]string{u.template.MainCommand})
+		} else {
+			msg.Text = u.template.NotAuthorized
+		}
 		return msg
 	}
 

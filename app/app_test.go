@@ -61,16 +61,16 @@ func TestWhenApp_Init_LoadMessages(t *testing.T) {
 	// Clean up
 	os.Setenv("TOKEN", "")
 
-	assert.Equal(t, "Welcome", app.config.Welcome)
+	assert.Equal(t, "Start", app.config.Welcome)
 }
 
 func TestWhenApp_GetStartMessage_ShowWelcomeMessage(t *testing.T) {
 	app := NewApp()
-	app.config.Welcome = "Welcome"
+	app.config.Welcome = "Start"
 
 	msg := app.chooseMsg("/start")
 
-	assert.Equal(t, "Welcome", msg)
+	assert.Equal(t, "Start", msg)
 }
 
 func TestWhenApp_Launch_LoadAuthData(t *testing.T) {

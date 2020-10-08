@@ -8,16 +8,10 @@ import (
 )
 
 type UserDB struct {
-	id         int
-	firstName  string
-	lastName   string
+	ID         int
+	FirstName  string
+	LastName   string
 	TelegramID sql.NullInt64
-	teamID     int
-}
-
-type Team struct {
-	id   int
-	name string
 }
 
 type Command struct {
@@ -91,14 +85,14 @@ func (ds DataSource) queryUpdate(query string) *sql.Result {
 }
 
 func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName string) *UserDB {
-	query := fmt.Sprintf("SELECT * FROM user WHERE first_name = '%s' AND last_name = '%s' AND telegram_id is null", firstName, lastName)
+	query := fmt.Sprintf("SELECT ID, first_name, last_name FROM user WHERE first_name = '%s' AND last_name = '%s' AND telegram_id is null", firstName, lastName)
 	row := ds.querySelectOne(query)
 	if row == nil {
 		return nil
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID, &user.teamID)
+	err := row.Scan(&user.ID, &user.FirstName, &user.LastName)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -107,7 +101,7 @@ func (ds DataSource) FindUserByFirstNameAndLatName(firstName string, lastName st
 }
 
 func (ds DataSource) SetTelegramIdToUser(user *UserDB, telegramId int) bool {
-	query := fmt.Sprintf("UPDATE user SET telegram_id = '%d' WHERE id = '%d'", telegramId, user.id)
+	query := fmt.Sprintf("UPDATE user SET telegram_id = '%d' WHERE ID = '%d'", telegramId, user.ID)
 	result := ds.queryUpdate(query)
 	if result == nil {
 		return false
@@ -123,7 +117,7 @@ func (ds DataSource) FindUserByTelegramId(TelegramID int) *UserDB {
 	}
 
 	user := new(UserDB)
-	err := row.Scan(&user.id, &user.firstName, &user.lastName, &user.TelegramID, &user.teamID)
+	err := row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.TelegramID)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -132,7 +126,7 @@ func (ds DataSource) FindUserByTelegramId(TelegramID int) *UserDB {
 }
 
 func (ds DataSource) FindCommand(cmdText string) *Command {
-	query := fmt.Sprintf("SELECT id, command, text FROM command WHERE command = '%s'", cmdText)
+	query := fmt.Sprintf("SELECT ID, command, text FROM command WHERE command = '%s'", cmdText)
 	row := ds.querySelectOne(query)
 	if row == nil {
 		return nil
@@ -145,7 +139,7 @@ func (ds DataSource) FindCommand(cmdText string) *Command {
 		return nil
 	}
 
-	query = fmt.Sprintf("SELECT cmd.command FROM command cmd INNER JOIN command_keyboard ck ON ck.child_id = cmd.id WHERE parent_id = '%d'", cmd.ID)
+	query = fmt.Sprintf("SELECT cmd.command FROM command cmd INNER JOIN command_keyboard ck ON ck.child_id = cmd.ID WHERE parent_id = '%d'", cmd.ID)
 	rows := ds.querySelectMany(query)
 	if rows == nil {
 		return cmd
