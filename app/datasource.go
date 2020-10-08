@@ -20,6 +20,13 @@ type Team struct {
 	name string
 }
 
+type Command struct {
+	ID      int
+	Command string
+	Text    string
+	Buttons []string
+}
+
 type DataSource struct {
 	path string
 }
@@ -124,22 +131,36 @@ func (ds DataSource) FindUserByTelegramId(TelegramID int) *UserDB {
 	return user
 }
 
-func (ds DataSource) FindAllPublicTeams() *[]Team {
-	query := fmt.Sprintf("SELECT * FROM team WHERE is_public = true")
-	rows := ds.querySelectMany(query)
-	if rows == nil {
+func (ds DataSource) FindCommand(cmdText string) *Command {
+	query := fmt.Sprintf("SELECT id, command, text FROM command WHERE command = '%s'", cmdText)
+	row := ds.querySelectOne(query)
+	if row == nil {
 		return nil
 	}
 
-	var teams []Team
+	cmd := new(Command)
+	err := row.Scan(&cmd.ID, &cmd.Command, &cmd.Text)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+
+	query = fmt.Sprintf("SELECT cmd.command FROM command cmd INNER JOIN command_keyboard ck ON ck.child_id = cmd.id WHERE parent_id = '%d'", cmd.ID)
+	rows := ds.querySelectMany(query)
+	if rows == nil {
+		return cmd
+	}
+
+	var buttons []string
 	for rows.Next() {
-		t := Team{}
-		err := rows.Scan(&t.id, &t.name)
+		var title string
+		err := rows.Scan(&title)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		teams = append(teams, t)
+		buttons = append(buttons, title)
 	}
-	return &teams
+	cmd.Buttons = buttons
+	return cmd
 }

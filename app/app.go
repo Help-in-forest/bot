@@ -53,9 +53,7 @@ func (a *App) init() {
 		log.Panic("Invalid DB_PATH. DB does not exist!")
 	}
 	a.dataSource = ds
-
-	auth := NewAuthorization(a.dataSource)
-	a.ui = NewUI(auth)
+	a.ui = NewUI(ds)
 }
 
 func (a *App) Start() {

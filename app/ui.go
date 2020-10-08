@@ -8,18 +8,19 @@ import (
 )
 
 type MessageTemplate struct {
-	Welcome    string `json:"welcome"`
-	AuthMsg    string `json:"auth_msg"`
-	Authorized string `json:"authorized"`
-	TeamsTitle string `json:"teams_button_title"`
+	Welcome          string `json:"welcome"`
+	AuthMsg          string `json:"auth_msg"`
+	MainCommand      string `json:"main_command"`
+	UndefinedCommand string `json:"undefined_command"`
 }
 
 type UI struct {
-	template *MessageTemplate
-	auth     *Authorization
+	template   *MessageTemplate
+	auth       *Authorization
+	dataSource *DataSource
 }
 
-func NewUI(authorization *Authorization) *UI {
+func NewUI(dataSource *DataSource) *UI {
 	templatePath := os.Getenv("MESSAGE_TEMPLATE_PATH")
 	if templatePath == "" {
 		log.Panic("MESSAGE_TEMPLATE_PATH is empty!")
@@ -34,7 +35,7 @@ func NewUI(authorization *Authorization) *UI {
 		log.Panic(err.Error())
 	}
 
-	return &UI{auth: authorization, template: template}
+	return &UI{auth: NewAuthorization(dataSource), dataSource: dataSource, template: template}
 }
 
 func (u UI) HandleMessage(userMessage *Message) *tgbotapi.MessageConfig {
@@ -53,32 +54,31 @@ func (u UI) HandleMessage(userMessage *Message) *tgbotapi.MessageConfig {
 	return u.chooseMessage(userMessage.Text, msg)
 }
 
-func (u UI) getMainMenu() tgbotapi.ReplyKeyboardMarkup {
-	buttons := []tgbotapi.KeyboardButton{
-		tgbotapi.NewKeyboardButton(u.template.TeamsTitle),
-		tgbotapi.NewKeyboardButton("Спринт"),
+func (u UI) getKeyboardButtons(titles []string) tgbotapi.ReplyKeyboardMarkup {
+	var keyboard []tgbotapi.KeyboardButton
+	for _, title := range titles {
+		button := tgbotapi.NewKeyboardButton(title)
+		keyboard = append(keyboard, button)
 	}
-	return tgbotapi.NewReplyKeyboard(buttons)
+	return tgbotapi.NewReplyKeyboard(keyboard)
 }
 
-func (u UI) getTeamsMenu() tgbotapi.ReplyKeyboardMarkup {
-	buttons := []tgbotapi.KeyboardButton{
-		tgbotapi.NewKeyboardButton("Команда 1"),
-		tgbotapi.NewKeyboardButton("Палата 6"),
-		tgbotapi.NewKeyboardButton("Risk&Dream"),
-	}
-	return tgbotapi.NewReplyKeyboard(buttons)
-}
+func (u UI) chooseMessage(cmdText string, msg *tgbotapi.MessageConfig) *tgbotapi.MessageConfig {
+	command := u.dataSource.FindCommand(cmdText)
 
-func (u UI) chooseMessage(command string, msg *tgbotapi.MessageConfig) *tgbotapi.MessageConfig {
-	switch command {
-	case u.template.TeamsTitle:
-		msg.Text = u.template.TeamsTitle
-		msg.ReplyMarkup = u.getTeamsMenu()
+	if command != nil {
+		msg.Text = command.Text
+		var buttons []string
+		if command.Buttons != nil {
+			buttons = command.Buttons
+		} else {
+			buttons = []string{u.template.MainCommand}
+		}
+		msg.ReplyMarkup = u.getKeyboardButtons(buttons)
 		return msg
-	default:
-		msg.Text = command
-		msg.ReplyMarkup = u.getMainMenu()
+	} else {
+		msg.Text = u.template.UndefinedCommand
+		msg.ReplyMarkup = u.getKeyboardButtons([]string{u.template.MainCommand})
 		return msg
 	}
 }
