@@ -6,7 +6,7 @@
 *.dylib
 go.sum
 docker-compose.yml
-.custom
+custom
 
 # Test binary, built with `go test -c`
 *.test
