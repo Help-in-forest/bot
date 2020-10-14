@@ -1,7 +1,7 @@
 {
-  "start": "Привет! Я Movix бот, я помогу тебе с Less\uD83D\uDE09 \nНапиши пожалуйста свое имя и фамилию через пробел",
-  "not_authorized": "Я не узнал тебя, напиши пожалуйста свое имя и фамилию через пробел\uD83D\uDE42",
-  "successful_authorization": "Успешная авторизация!",
-  "main_command": "Главное меню",
-  "undefined_command": "Упссс, я не понял о чем ты\uD83D\uDE14"
+  "start": "Hi!",
+  "not_authorized": "Please enter your first and last name",
+  "successful_authorization": "Successful authorization!",
+  "main_command": "Main menu",
+  "undefined_command": "Oops I don't understand"
 }
