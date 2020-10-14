@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bot
+    environment:
+      - TOKEN=123456
+      - DB_PATH=./config/dev.db
+      - MESSAGE_TEMPLATE_PATH=./config/config.json
