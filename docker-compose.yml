@@ -8,5 +8,5 @@ services:
     container_name: bot
     environment:
       - TOKEN=123456
-      - DB_PATH=./config/dev.db
+      - DB_PATH=./config/dataSource.db
       - MESSAGE_TEMPLATE_PATH=./config/config.json
