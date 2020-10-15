@@ -3,28 +3,14 @@ package app
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"io/ioutil"
 	"log"
 	"os"
 )
 
-var (
-	//ReaderFile define for test
-	ReaderFile = ioutil.ReadFile
-)
-
 type App struct {
 	token      string
-	users      map[string][]User
-	authorized map[string]struct{}
 	dataSource *DataSource
 	ui         *UI
-}
-
-type User struct {
-	Name    string
-	Surname string
-	Data    string
 }
 
 type Message struct {
@@ -35,7 +21,7 @@ type Message struct {
 }
 
 func NewApp() *App {
-	return &App{users: map[string][]User{}, authorized: map[string]struct{}{}}
+	return &App{}
 }
 
 func (a *App) init() {
