@@ -1,6 +1,7 @@
 {
-  "welcome": "Welcome",
-  "auth_msg": "Hi! You are not authorized. Please send your Surname Name and auth data",
-  "authorized": "Hey! I know you!",
-  "teams_button_title": "Teams"
+  "start": "Hi!",
+  "not_authorized": "Please enter your first and last name",
+  "successful_authorization": "Successful authorization!",
+  "main_command": "Main menu",
+  "undefined_command": "Oops I don't understand"
 }
